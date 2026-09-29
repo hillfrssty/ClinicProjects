@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClinicWebApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dcbbe6ebbe2c18f43f4623c22b9e2a8679c49682")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClinicWebApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClinicWebApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
