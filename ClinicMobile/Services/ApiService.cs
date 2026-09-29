@@ -6,7 +6,7 @@ namespace ClinicMobile.Services;
 public class ApiService
 {
     private readonly HttpClient _http = new();
-    // Меняй порт на тот, что показывает API
+    
     private const string BaseUrl = "http://localhost:5112/api";
 
     public async Task<List<Medicine>> GetMedicinesAsync()
