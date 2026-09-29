@@ -1,0 +1,99 @@
+@page "/hospitalizations"
+@rendermode InteractiveServer
+@inject HospitalizationService HospService
+@inject PatientService PatientService
+
+<h3>Госпитализация</h3>
+
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">
+    <select @bind="selectedPatientId">
+        <option value="0">-- Выберите пациента --</option>
+        @foreach (var p in patients)
+        {
+            <option value="@p.Id">@p.LastName @p.FirstName (ID @p.Id)</option>
+        }
+    </select>
+    <select @bind="department">
+        <option>Терапия</option>
+        <option>Хирургия</option>
+        <option>Кардиология</option>
+        <option>Неврология</option>
+    </select>
+    <input @bind="purpose" placeholder="Цель госпитализации" />
+    <input type="date" @bind="admissionDate" />
+    <select @bind="conditions">
+        <option>Бюджет</option>
+        <option>Платно</option>
+    </select>
+    <button @onclick="AddHosp">Госпитализировать</button>
+</div>
+
+@if (message != "")
+{
+    <div style="padding:10px; background:#e3f2fd; border:1px solid #2196f3; margin-bottom:10px;">@message</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th><th>Код</th><th>Пациент</th><th>Отделение</th>
+            <th>Цель</th><th>Дата</th><th>Условия</th><th>Статус</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var h in hospList)
+        {
+            <tr>
+                <td>@h.Id</td>
+                <td>@h.HospitalizationCode</td>
+                <td>@h.PatientName</td>
+                <td>@h.Department</td>
+                <td>@h.Purpose</td>
+                <td>@h.AdmissionDate.ToString("dd.MM.yyyy")</td>
+                <td>@h.Conditions</td>
+                <td>@h.Status</td>
+                <td>
+                    @if (h.Status != "Отменена")
+                    {
+                        <button @onclick="() => CancelHosp(h.Id)">Отменить</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Hospitalization> hospList = new();
+    private List<Patient> patients = new();
+    private int selectedPatientId = 0;
+    private string department = "Терапия";
+    private string purpose = "Обследование";
+    private DateTime admissionDate = DateTime.Today;
+    private string conditions = "Бюджет";
+    private string message = "";
+
+    protected override void OnInitialized()
+    {
+        patients = PatientService.GetAll();
+        LoadHosp();
+    }
+
+    private void LoadHosp() => hospList = HospService.GetAll();
+
+    private void AddHosp()
+    {
+        if (selectedPatientId == 0) { message = "Выберите пациента"; return; }
+        HospService.Add(selectedPatientId, department, purpose, admissionDate, conditions);
+        message = "Госпитализация сохранена";
+        selectedPatientId = 0;
+        LoadHosp();
+    }
+
+    private void CancelHosp(int id)
+    {
+        HospService.Cancel(id);
+        message = "Госпитализация отменена";
+        LoadHosp();
+    }
+}

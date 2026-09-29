@@ -1,0 +1,106 @@
+@page "/map"
+@rendermode InteractiveServer
+@inject ApiService ApiService
+@implements IDisposable
+
+<h3>Карта движения по отделению</h3>
+<p>Обновление каждые 3 секунды. Последнее: @lastUpdate.ToString("HH:mm:ss")</p>
+
+<div style="display:flex; gap:20px; flex-wrap:wrap;">
+    <div style="border:2px solid #333; padding:10px; background:#fafafa;">
+        <svg width="800" height="500" style="background:#fff; border:1px solid #ddd;">
+            @foreach (var room in rooms)
+            {
+                <rect x="@room.X" y="@room.Y" width="@room.W" height="@room.H"
+                      fill="#e3f2fd" stroke="#1976d2" stroke-width="2" />
+                @("<text x='" + (room.X + 10) + "' y='" + (room.Y + 20) + "' font-size='14' fill='#333'>" + room.Name + "</text>")
+            }
+
+            @foreach (var person in people)
+            {
+                var pos = GetPosition(person);
+                <circle cx="@pos.X" cy="@pos.Y" r="6"
+                        fill="@(person.PersonRole == "Сотрудник" ? "#1976d2" : "#4caf50")"
+                        stroke="#000" stroke-width="1" />
+            }
+        </svg>
+    </div>
+
+    <div style="padding:10px; border:1px solid #ccc; background:#f9f9f9; min-width:220px;">
+        <h4>Легенда</h4>
+        <p>
+            <span style="display:inline-block; width:15px; height:15px; background:#1976d2; border-radius:50%; vertical-align:middle;"></span>
+            Сотрудники (@people.Count(p => p.PersonRole == "Сотрудник"))
+        </p>
+        <p>
+            <span style="display:inline-block; width:15px; height:15px; background:#4caf50; border-radius:50%; vertical-align:middle;"></span>
+            Клиенты (@people.Count(p => p.PersonRole == "Клиент"))
+        </p>
+        <p><b>Всего:</b> @people.Count</p>
+    </div>
+</div>
+
+@code {
+    private List<PersonLocation> people = new();
+    private DateTime lastUpdate = DateTime.Now;
+    private Timer? timer;
+
+    private List<Room> rooms = new()
+    {
+        new Room { Name = "Регистратура", X = 20,  Y = 20,  W = 180, H = 100 },
+        new Room { Name = "Терапевт",     X = 220, Y = 20,  W = 140, H = 100 },
+        new Room { Name = "Кардиолог",    X = 380, Y = 20,  W = 140, H = 100 },
+        new Room { Name = "Хирург",       X = 540, Y = 20,  W = 140, H = 100 },
+        new Room { Name = "Анализы",      X = 20,  Y = 150, W = 200, H = 120 },
+        new Room { Name = "Рентген",      X = 240, Y = 150, W = 160, H = 120 },
+        new Room { Name = "Процедурная",  X = 420, Y = 150, W = 160, H = 120 },
+        new Room { Name = "Аптека",       X = 600, Y = 150, W = 180, H = 120 },
+        new Room { Name = "Коридор",      X = 20,  Y = 290, W = 760, H = 80 },
+        new Room { Name = "Стационар",    X = 20,  Y = 390, W = 300, H = 90 },
+        new Room { Name = "Операционная", X = 340, Y = 390, W = 220, H = 90 },
+        new Room { Name = "Склад",        X = 580, Y = 390, W = 200, H = 90 }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        timer = new Timer(async _ =>
+        {
+            await LoadData();
+            await InvokeAsync(StateHasChanged);
+        }, null, 3000, 3000);
+    }
+
+    private async Task LoadData()
+    {
+        people = await ApiService.GetPersonLocationsAsync();
+        lastUpdate = DateTime.Now;
+    }
+
+    private (int X, int Y) GetPosition(PersonLocation person)
+    {
+        int index = (person.LastSecurityPointNumber - 1) % rooms.Count;
+        if (index < 0) index = 0;
+        var room = rooms[index];
+
+        var rnd = new Random(person.PersonCode.GetHashCode());
+        int x = room.X + 20 + rnd.Next(room.W - 40);
+        int y = room.Y + 30 + rnd.Next(room.H - 50);
+
+        return (x, y);
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+
+    public class Room
+    {
+        public string Name { get; set; } = "";
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int W { get; set; }
+        public int H { get; set; }
+    }
+}

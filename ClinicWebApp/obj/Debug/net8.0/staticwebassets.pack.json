@@ -1,0 +1,45 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\ClinicWebApp.bundle.scp.css",
+      "PackagePath": "staticwebassets\\ClinicWebApp.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\wwwroot\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\wwwroot\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "C:\\Users\\Huawei\\ClinicProjects\\ClinicWebApp\\wwwroot\\js\\dragdrop.js",
+      "PackagePath": "staticwebassets\\js\\dragdrop.js"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.ClinicWebApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.ClinicWebApp.props",
+      "PackagePath": "build\\ClinicWebApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.ClinicWebApp.props",
+      "PackagePath": "buildMultiTargeting\\ClinicWebApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.ClinicWebApp.props",
+      "PackagePath": "buildTransitive\\ClinicWebApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,171 @@
+@page "/beds"
+@rendermode InteractiveServer
+@inject BedService BedService
+@inject PatientService PatientService
+
+<h3>Коечный фонд отделения</h3>
+
+<p>
+    <b>Как работать:</b><br />
+    1. Выберите пациента в списке ниже.<br />
+    2. Кликните на <b>свободную</b> койку — пациент будет госпитализирован.<br />
+    3. <b>Перетащите</b> пациента на другую свободную койку — перевод.<br />
+    4. <b>Правый клик</b> по занятой койке — выписка.
+</p>
+
+<!-- Панель госпитализации -->
+<div style="display:flex; gap:10px; align-items:center; margin-bottom:15px; padding:10px; background:#f0f8ff; border:1px solid #2196f3;">
+    <label><b>Пациент для госпитализации:</b></label>
+    <select @bind="selectedPatientId" style="min-width:300px;">
+        <option value="0">-- выберите --</option>
+        @foreach (var p in patients)
+        {
+            <option value="@p.Id">@p.LastName @p.FirstName (ID @p.Id)</option>
+        }
+    </select>
+    @if (selectedPatientId != 0)
+    {
+        <span style="color:#1976d2;">Теперь кликните на свободную койку →</span>
+    }
+</div>
+
+@if (message != "")
+{
+    <div style="padding:10px; background:#e3f2fd; border:1px solid #2196f3; margin-bottom:15px;">@message</div>
+}
+
+<div style="display:flex; flex-wrap:wrap; gap:15px;">
+    @foreach (var room in rooms)
+    {
+        <div style="border:2px solid #333; padding:10px; background:#fafafa; min-width:180px;">
+            <h4 style="margin:0 0 8px 0;">Палата № @room.Key</h4>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                @foreach (var bed in room.Value)
+                {
+                    <div draggable="@(bed.IsOccupied ? "true" : "false")"
+                         @ondragstart:preventDefault="false"
+                         @ondragstart="() => OnDragStart(bed)"
+                         @ondragover:preventDefault="true"
+                         @ondrop:preventDefault="true"
+                         @ondrop="() => OnDrop(bed)"
+                         @onclick="() => OnBedClick(bed)"
+                         @oncontextmenu:preventDefault="true"
+                         @oncontextmenu="() => OnRightClick(bed)"
+                         style="width:100px; height:70px; border:2px solid @(bed.IsOccupied ? "#1976d2" : "#999");
+                                background:@(bed.IsOccupied ? "#e3f2fd" : "#fff");
+                                cursor:pointer;
+                                display:flex; flex-direction:column; align-items:center; justify-content:center;
+                                font-size:11px; text-align:center; padding:4px; user-select:none;">
+                        <b>@bed.BedNumber</b>
+                        @if (bed.IsOccupied)
+                        {
+                            <span style="margin-top:4px;">@bed.PatientName</span>
+                        }
+                        else
+                        {
+                            <span style="color:#999; margin-top:4px;">свободно</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Bed> allBeds = new();
+    private Dictionary<string, List<Bed>> rooms = new();
+    private List<Patient> patients = new();
+    private Bed? draggedBed;
+    private int selectedPatientId = 0;
+    private string message = "";
+
+    protected override void OnInitialized()
+    {
+        patients = PatientService.GetAll();
+        Load();
+    }
+
+    private void Load()
+    {
+        allBeds = BedService.GetAll();
+        rooms = allBeds
+            .GroupBy(b => b.RoomNumber)
+            .ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    /// <summary>
+    /// Клик по койке. Если выбран пациент — госпитализируем. Если нет — подсказка.
+    /// </summary>
+    private void OnBedClick(Bed bed)
+    {
+        if (selectedPatientId == 0)
+        {
+            if (!bed.IsOccupied)
+                message = "Сначала выберите пациента в списке сверху.";
+            else
+                message = $"В палате {bed.RoomNumber} лежит {bed.PatientName}. Правый клик — выписать.";
+            return;
+        }
+
+        if (bed.IsOccupied)
+        {
+            message = "Эта койка занята. Выберите свободную.";
+            return;
+        }
+
+        BedService.MovePatient(bed.Id, selectedPatientId);
+
+        var patient = patients.FirstOrDefault(p => p.Id == selectedPatientId);
+        message = $"{patient?.LastName} {patient?.FirstName} госпитализирован в палату {bed.RoomNumber}, койка {bed.BedNumber}";
+
+        selectedPatientId = 0;
+        Load();
+    }
+
+    private void OnDragStart(Bed bed)
+    {
+        if (bed == null || !bed.IsOccupied) return;
+        draggedBed = bed;
+        message = $"Перетаскиваем: {bed.PatientName}";
+    }
+
+    private void OnDrop(Bed targetBed)
+    {
+        if (targetBed == null) return;
+        if (draggedBed == null) return;
+
+        if (targetBed.IsOccupied)
+        {
+            message = "Место занято! Перетаскивание отменено.";
+            draggedBed = null;
+            return;
+        }
+
+        if (targetBed.Id == draggedBed.Id)
+        {
+            draggedBed = null;
+            return;
+        }
+
+        BedService.MovePatient(draggedBed.Id, null);
+        BedService.MovePatient(targetBed.Id, draggedBed.PatientId);
+
+        message = $"{draggedBed.PatientName} переведён в палату {targetBed.RoomNumber}, койка {targetBed.BedNumber}";
+        draggedBed = null;
+        Load();
+    }
+
+    private void OnRightClick(Bed bed)
+    {
+        if (!bed.IsOccupied)
+        {
+            message = "Койка свободна — некого выписывать.";
+            return;
+        }
+
+        BedService.Discharge(bed.Id);
+        message = $"Пациент {bed.PatientName} выписан из палаты {bed.RoomNumber}";
+        Load();
+    }
+}

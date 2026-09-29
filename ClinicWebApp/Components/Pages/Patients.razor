@@ -1,0 +1,112 @@
+@page "/patients"
+@rendermode InteractiveServer
+@inject PatientService PatientService
+@inject IJSRuntime JS
+@using QRCoder
+
+<h3>Регистрация пациентов</h3>
+
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">
+    <input @bind="newPatient.LastName" placeholder="Фамилия" />
+    <input @bind="newPatient.FirstName" placeholder="Имя" />
+    <input @bind="newPatient.MiddleName" placeholder="Отчество" />
+    <input @bind="newPatient.Phone" placeholder="Телефон" />
+    <input @bind="newPatient.PassportSeries" placeholder="Серия паспорта" />
+    <input @bind="newPatient.PassportNumber" placeholder="Номер паспорта" />
+    <input @bind="newPatient.InsurancePolicy" placeholder="Полис" />
+    <input @bind="newPatient.MedicalCardNumber" placeholder="№ карты" />
+    <button @onclick="AddPatient">Добавить</button>
+</div>
+
+<div style="margin-bottom:10px;">
+    <input @bind="searchText" @bind:event="oninput" placeholder="Поиск по фамилии..." />
+</div>
+
+@if (message != "")
+{
+    <div style="padding:10px; background:#e8f5e9; border:1px solid #4caf50; margin-bottom:10px;">@message</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th><th>ФИО</th><th>Телефон</th><th>№ Карты</th><th>Полис</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in FilteredPatients)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.LastName @p.FirstName @p.MiddleName</td>
+                <td>@p.Phone</td>
+                <td>@p.MedicalCardNumber</td>
+                <td>@p.InsurancePolicy</td>
+                <td>
+                    <button @onclick="() => DeletePatient(p.Id)">Удалить</button>
+                    <button @onclick="() => ShowQr(p)">QR</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (qrBase64 != null)
+{
+    <div style="margin-top:15px; padding:15px; border:2px solid #2196f3;">
+        <h4>QR-код: @qrName</h4>
+        <img src="data:image/png;base64,@qrBase64" />
+        <br />
+        <button @onclick="() => qrBase64 = null">Закрыть</button>
+    </div>
+}
+
+@code {
+    private List<Patient> patients = new();
+    private Patient newPatient = new();
+    private string searchText = "";
+    private string message = "";
+    private string? qrBase64;
+    private string qrName = "";
+
+    private IEnumerable<Patient> FilteredPatients =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? patients
+            : patients.Where(p => p.LastName.ToLower().Contains(searchText.ToLower()));
+
+    protected override void OnInitialized() => Load();
+
+    private void Load() => patients = PatientService.GetAll();
+
+    private void AddPatient()
+    {
+        if (string.IsNullOrWhiteSpace(newPatient.LastName) || string.IsNullOrWhiteSpace(newPatient.FirstName))
+        {
+            message = "Заполните фамилию и имя";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(newPatient.MedicalCardNumber))
+            newPatient.MedicalCardNumber = "MC-" + DateTime.Now.Ticks % 1000000;
+
+        PatientService.Add(newPatient);
+        newPatient = new Patient();
+        message = "Пациент добавлен";
+        Load();
+    }
+
+    private void DeletePatient(int id)
+    {
+        PatientService.Delete(id);
+        message = "Пациент удалён";
+        Load();
+    }
+
+    private void ShowQr(Patient p)
+    {
+        using var gen = new QRCodeGenerator();
+        using var data = gen.CreateQrCode(p.MedicalCardNumber, QRCodeGenerator.ECCLevel.Q);
+        using var png = new PngByteQRCode(data);
+        qrBase64 = Convert.ToBase64String(png.GetGraphic(20));
+        qrName = $"{p.LastName} {p.FirstName} ({p.MedicalCardNumber})";
+    }
+}

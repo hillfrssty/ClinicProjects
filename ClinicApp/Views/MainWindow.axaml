@@ -1,0 +1,142 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ClinicApp.ViewModels"
+        x:Class="ClinicApp.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="МИС — Больница"
+        Width="1400" Height="800">
+
+    <TabControl>
+        <!-- ==================== ВКЛАДКА 1: ПАЦИЕНТЫ ==================== -->
+        <TabItem Header="Пациенты">
+            <ContentControl Content="{Binding}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate>
+                        <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="10">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBlock Text="Поиск по фамилии:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBox Text="{Binding SearchText}" Width="250"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBox Watermark="Фамилия" Text="{Binding NewLastName}" Width="140" Margin="0,0,5,0"/>
+                                <TextBox Watermark="Имя" Text="{Binding NewFirstName}" Width="140" Margin="0,0,5,0"/>
+                                <TextBox Watermark="Телефон" Text="{Binding NewPhone}" Width="140" Margin="0,0,5,0"/>
+                                <TextBox Watermark="№ карты" Text="{Binding NewCard}" Width="120" Margin="0,0,5,0"/>
+                                <Button Content="Добавить" Command="{Binding AddPatientCommand}" Margin="0,0,5,0"/>
+                                <Button Content="Удалить" Command="{Binding DeletePatientCommand}"/>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="2"
+                                      ItemsSource="{Binding FilteredPatients}"
+                                      SelectedItem="{Binding SelectedPatient}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
+                                    <DataGridTextColumn Header="Фамилия" Binding="{Binding LastName}" Width="*"/>
+                                    <DataGridTextColumn Header="Имя" Binding="{Binding FirstName}" Width="*"/>
+                                    <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="180"/>
+                                    <DataGridTextColumn Header="№ Карты" Binding="{Binding MedicalCardNumber}" Width="150"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Grid.Row="3" Text="{Binding Message}" Margin="0,10,0,0"/>
+                        </Grid>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </TabItem>
+
+        <!-- ==================== ВКЛАДКА 2: РАСПИСАНИЕ ==================== -->
+        <TabItem Header="Расписание">
+            <ContentControl Content="{Binding ScheduleVM}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate>
+                        <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="10">
+
+                            <!-- Панель 1: ФИЛЬТРЫ -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBlock Text="Дата:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <DatePicker SelectedDate="{Binding SelectedDate}" Margin="0,0,15,0"/>
+                                <CheckBox Content="Неделя" IsChecked="{Binding WeekView}" Margin="0,0,15,0"/>
+                                <TextBlock Text="Врач:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox ItemsSource="{Binding Doctors}"
+                                          SelectedItem="{Binding SelectedDoctor}"
+                                          Width="200" Margin="0,0,15,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding FullName}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="Специальность:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox ItemsSource="{Binding Specializations}"
+                                          SelectedItem="{Binding FilterSpecialization}"
+                                          Width="150" Margin="0,0,15,0"/>
+                                <Button Content="Утвердить расписание"
+                                        Command="{Binding ApproveCommand}"
+                                        Margin="0,0,5,0"/>
+                                <Button Content="Обновить"
+                                        Command="{Binding RefreshScheduleCommand}"/>
+                            </StackPanel>
+
+                            <!-- Панель 2: ЗАПИСЬ ПАЦИЕНТА -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBlock Text="Пациент:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox ItemsSource="{Binding Patients}"
+                                          SelectedItem="{Binding SelectedPatient}"
+                                          Width="250" Margin="0,0,15,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding LastName}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Text="Выбранный слот:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding SelectedSlot.DoctorName}"
+                                           VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#80cbc4"/>
+                                <TextBlock Text="{Binding SelectedSlot.TimeDisplay}"
+                                           VerticalAlignment="Center" Margin="0,0,15,0" Foreground="#80cbc4"/>
+
+                                <Button Content="Записать" Command="{Binding BookCommand}" Margin="0,0,5,0"/>
+                                <Button Content="Отменить запись" Command="{Binding CancelCommand}"/>
+                            </StackPanel>
+
+                            <!-- Разделитель -->
+                            <Border Grid.Row="2" Height="1" Background="#555555" Margin="0,0,0,5"/>
+
+                            <!-- Таблица расписания -->
+                            <DataGrid Grid.Row="3"
+                                      ItemsSource="{Binding FilteredItems}"
+                                      SelectedItem="{Binding SelectedSlot}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Дата" Binding="{Binding DateDisplay}" Width="100"/>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding TimeDisplay}" Width="80"/>
+                                    <DataGridTextColumn Header="Врач" Binding="{Binding DoctorName}" Width="200"/>
+                                    <DataGridTextColumn Header="Пациент" Binding="{Binding PatientName}" Width="200"/>
+
+                                    <!-- ЦВЕТНАЯ КОЛОНКА СТАТУСА -->
+                                    <DataGridTemplateColumn Header="Статус" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{Binding StatusColor}"
+                                                        Padding="8,3"
+                                                        CornerRadius="4"
+                                                        Margin="2">
+                                                    <TextBlock Text="{Binding Status}" Foreground="White"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="Утверждено" Binding="{Binding IsApproved}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                        </Grid>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </TabItem>
+    </TabControl>
+</Window>

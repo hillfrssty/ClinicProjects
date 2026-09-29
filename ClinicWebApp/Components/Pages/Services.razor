@@ -1,0 +1,29 @@
+@page "/services"
+@rendermode InteractiveServer
+@inject ServiceService ServiceService
+
+<h3>Лечебно-диагностические мероприятия</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th><th>Название</th><th>Тип</th><th>Цена (руб.)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in services)
+        {
+            <tr>
+                <td>@s.Id</td>
+                <td>@s.ServiceName</td>
+                <td>@s.ServiceType</td>
+                <td>@s.Price.ToString("N2")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<MedicalService> services = new();
+    protected override void OnInitialized() => services = ServiceService.GetAll();
+}
